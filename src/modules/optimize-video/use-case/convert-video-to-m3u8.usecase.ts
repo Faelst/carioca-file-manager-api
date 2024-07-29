@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
 import * as ffmpeg from 'fluent-ffmpeg'
 import * as path from 'path'
 import * as fs from 'fs'
@@ -7,26 +6,38 @@ import * as fs from 'fs'
 import { FtpService } from '../../ftp/ftp.service'
 
 @Injectable()
-export class ConvertVideoToM3u8 {
-  constructor(
-    private readonly ftpService: FtpService,
-    private readonly configService: ConfigService,
-  ) {}
+export class ConvertVideoToM3u8UseCase {
+  private basePath: string
 
-  async execute(remoteFilePath: string) {
-    const outputDir = this.configService.getOrThrow('LOCAL_UPLOADS_PATH')
+  constructor(private readonly ftpService: FtpService) {
+    this.basePath = path.resolve(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'uploads',
+      'videos',
+    )
+  }
 
-    const localInputPath = path.join(outputDir, path.basename(remoteFilePath))
+  async execute({
+    remoteFilePath,
+    fileName,
+  }: {
+    remoteFilePath: string
+    fileName: string
+  }) {
+    const localInputPath = path.join(this.basePath, fileName)
 
-    const localOutputPath = path.join(outputDir, outputFileName)
+    const outputFileName = `${fileName.split('.')[0]}.m3u8`
+
+    const localOutputPath = path.join(this.basePath, outputFileName)
 
     await this.ftpService.downloadTo(localInputPath, remoteFilePath)
 
     return new Promise((resolve, reject) => {
-      if (!fs.existsSync(outputDir)) {
-        fs.mkdirSync(outputDir, { recursive: true })
-      }
-
       ffmpeg(localInputPath)
         .outputOptions([
           '-codec: copy',
@@ -44,14 +55,24 @@ export class ConvertVideoToM3u8 {
               outputFileName,
             )
 
+            await this.ftpService.delete(remoteFilePath)
+
+            fs.readdirSync(this.basePath).forEach((file) => {
+              if (file.includes(fileName.split('.')[0])) {
+                fs.unlinkSync(path.join(this.basePath, file))
+              }
+            })
+
             resolve(
               `File has been converted successfully and saved to ${localOutputPath}`,
             )
           } catch (err) {
-            reject(`Failed to upload file: ${err.message}`)
+            console.log(err)
+            reject(`Failed to upload file: ${err}`)
           }
         })
         .on('error', (err) => {
+          console.log(err)
           reject(`Error: ${err.message}`)
         })
         .run()

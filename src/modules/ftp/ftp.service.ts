@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { Client, FileInfo, FTPResponse, UploadOptions } from 'basic-ftp'
+import { Client, FileInfo, UploadOptions } from 'basic-ftp'
 import { Readable, Writable } from 'stream'
 import { IConnectionOptions } from './ftp.interfaces'
 
@@ -15,35 +15,19 @@ export class FtpService {
   }
 
   async list(path?: string): Promise<FileInfo[]> {
-    try {
-      await this.ftpClient.access(this.options)
-      return await this.ftpClient.list(path)
-    } catch (err) {
-      this.ftpClient.close()
-      throw err
-    } finally {
-      this.ftpClient.close()
-    }
+    await this.ftpClient.access(this.options)
+
+    return await this.ftpClient.list(path)
   }
 
   async downloadTo(
     destination: Writable | string,
     fromRemotePath: string,
     startAt?: number,
-  ): Promise<FTPResponse> {
-    try {
-      await this.ftpClient.access(this.options)
-      return await this.ftpClient.downloadTo(
-        destination,
-        fromRemotePath,
-        startAt,
-      )
-    } catch (err) {
-      this.ftpClient.close()
-      throw err
-    } finally {
-      this.ftpClient.close()
-    }
+  ): Promise<void> {
+    await this.ftpClient.access(this.options)
+
+    await this.ftpClient.downloadTo(destination, fromRemotePath, startAt)
   }
 
   async upload(

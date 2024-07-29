@@ -10,7 +10,8 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "baseUrl": "./src",
+    "strict": true,
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -25,5 +26,7 @@
       "@modules/*": ["src/modules/*"],
       "@utils/*": ["src/utils/*"]
     }
-  }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "output_videos"]
 }

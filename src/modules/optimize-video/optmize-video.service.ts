@@ -1,15 +1,20 @@
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq'
-import { Injectable, UseInterceptors } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 
 import { convertVideoConfigSubscription } from './subscription-configs/convert-video.config'
+import { ConvertVideoToM3u8UseCase } from './use-case/convert-video-to-m3u8.usecase'
 
 @Injectable()
 export class OptimizeVideoService {
-  constructor() {}
+  constructor(
+    private readonly convertVideoToM3u8UseCase: ConvertVideoToM3u8UseCase,
+  ) {}
 
-  @UseInterceptors()
   @RabbitSubscribe(convertVideoConfigSubscription)
-  public async eventJoinConsumer(message: any) {
-    console.log('Message:', message)
+  public async eventJoinConsumer(message: {
+    remoteFilePath: string
+    fileName: string
+  }) {
+    await this.convertVideoToM3u8UseCase.execute(message)
   }
 }
