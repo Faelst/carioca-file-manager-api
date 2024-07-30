@@ -12,6 +12,7 @@ export class OptimizeVideoService {
 
   @RabbitSubscribe(convertVideoConfigSubscription)
   public async eventJoinConsumer(message: {
+    postId: string
     remoteFilePath: string
     fileName: string
   }) {

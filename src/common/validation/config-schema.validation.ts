@@ -9,4 +9,5 @@ export const envValidationSchema = Joi.object({
   FTP_PASSWORD: Joi.required(),
   FTP_BASE_URL: Joi.required(),
   LOCAL_VIDEO_UPLOADS_PATH: Joi.required(),
+  API_CARIOCA: Joi.required(),
 })
